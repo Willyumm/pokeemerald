@@ -282,7 +282,11 @@
 #define USE_RANDOM_IVS (MAX_PER_STAT_IVS + 1)
 #define MAX_PER_STAT_EVS 255
 #define MAX_TOTAL_EVS 510
+#if I_VITAMIN_EV_CAP >= GEN_8
+#define EV_ITEM_RAISE_LIMIT MAX_PER_STAT_EVS
+#else
 #define EV_ITEM_RAISE_LIMIT 100
+#endif
 
 // Battle move flags
 #define FLAG_MAKES_CONTACT                        (1 << 0)
@@ -394,6 +398,15 @@
 #define EVO_MODE_BATTLE_SPECIAL    4
 #define EVO_MODE_OVERWORLD_SPECIAL 5
 
+// Form change types
+#define FORM_CHANGE_END         0
+#define FORM_ITEM_HOLD          1
+#define FORM_ITEM_USE           2
+#define FORM_MOVE               3
+#define FORM_WITHDRAW           4
+#define FORM_ITEM_HOLD_ABILITY  5
+#define FORM_ITEM_USE_TIME      6
+
 #define NUM_MALE_LINK_FACILITY_CLASSES   8
 #define NUM_FEMALE_LINK_FACILITY_CLASSES 8
 
@@ -407,6 +420,18 @@
 
 #define SKIP_FRONT_ANIM (1 << 7)
 
-#define NUM_ABILITY_SLOTS 2
+#define NUM_ABILITY_SLOTS (NUM_NORMAL_ABILITY_SLOTS + NUM_HIDDEN_ABILITY_SLOTS)
+#define NUM_NORMAL_ABILITY_SLOTS 2
+#define NUM_HIDDEN_ABILITY_SLOTS 1
+
+// Species Flags
+#define FLAG_LEGENDARY          (1 << 0)
+#define FLAG_MYTHICAL           (1 << 1)
+#define FLAG_ULTRA_BEAST        (1 << 2)
+#define FLAG_ALOLAN_FORM        (1 << 3)
+#define FLAG_GALARIAN_FORM      (1 << 4)
+#define FLAG_GENDER_DIFFERENCE  (1 << 5)
+
+#define LEGENDARY_PERFECT_IV_COUNT 3
 
 #endif // GUARD_CONSTANTS_POKEMON_H
