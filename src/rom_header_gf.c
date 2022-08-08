@@ -24,16 +24,18 @@ struct GFRomHeader
     u32 flagsOffset;
     u32 varsOffset;
     u32 pokedexOffset;
+    #ifndef FREE_EXTRA_SEEN_FLAGS
     u32 seen1Offset;
+    #endif
     u32 seen2Offset;
     u32 pokedexVar;
     u32 pokedexFlag;
     u32 mysteryEventFlag;
     u32 pokedexCount;
-    u8 playerNameLength;
-    u8 trainerNameLength;
-    u8 pokemonNameLength1;
-    u8 pokemonNameLength2;
+    u8 unk1;
+    u8 unk2;
+    u8 unk3;
+    u8 unk4;
     u8 unk5;
     u8 unk6;
     u8 unk7;
@@ -78,9 +80,11 @@ struct GFRomHeader
     u8 pcItemsCount;
     u32 pcItemsOffset;
     u32 giftRibbonsOffset;
+    #ifndef FREE_ENIGMA_BERRY
     u32 enigmaBerryOffset;
-    u32 enigmaBerrySize;
-    const u8 * moveDescriptions;
+    #endif
+    u32 mapViewOffset;
+    u32 unk19;
     u32 unk20;
 };
 
@@ -104,30 +108,30 @@ static const struct GFRomHeader sGFRomHeader = {
     .flagsOffset = offsetof(struct SaveBlock1, flags),
     .varsOffset = offsetof(struct SaveBlock1, vars),
     .pokedexOffset = offsetof(struct SaveBlock2, pokedex),
+    #ifndef FREE_EXTRA_SEEN_FLAGS
     .seen1Offset = offsetof(struct SaveBlock1, seen1),
-    .seen2Offset = offsetof(struct SaveBlock1, seen2),
+    #endif
     .pokedexVar = VAR_NATIONAL_DEX - VARS_START,
     .pokedexFlag = FLAG_RECEIVED_POKEDEX_FROM_BIRCH,
     .mysteryEventFlag = FLAG_SYS_MYSTERY_EVENT_ENABLE,
     .pokedexCount = NATIONAL_DEX_COUNT,
-    .playerNameLength = PLAYER_NAME_LENGTH,
-    .trainerNameLength = TRAINER_NAME_LENGTH,
-    .pokemonNameLength1 = POKEMON_NAME_LENGTH,
-    .pokemonNameLength2 = POKEMON_NAME_LENGTH,
-    // Two of the below 12s are likely move/ability name length, given their presence in this header
-    .unk5 = 12,
-    .unk6 = 12,
-    .unk7 = 6,
-    .unk8 = 12,
-    .unk9 = 6,
-    .unk10 = 16,
-    .unk11 = 18,
-    .unk12 = 12,
-    .unk13 = 15,
-    .unk14 = 11,
-    .unk15 = 1,
-    .unk16 = 8,
-    .unk17 = 12,
+    .unk1 = 0x07,
+    .unk2 = 0x0a,
+    .unk3 = 0x0a,
+    .unk4 = 0x0a,
+    .unk5 = 0x0c,
+    .unk6 = 0x0c,
+    .unk7 = 0x06,
+    .unk8 = 0x0c,
+    .unk9 = 0x06,
+    .unk10 = 0x10,
+    .unk11 = 0x12,
+    .unk12 = 0x0c,
+    .unk13 = 0x0f,
+    .unk14 = 0x0b,
+    .unk15 = 0x01,
+    .unk16 = 0x08,
+    .unk17 = 0x0c,
     .saveBlock2Size = sizeof(struct SaveBlock2),
     .saveBlock1Size = sizeof(struct SaveBlock1),
     .partyCountOffset = offsetof(struct SaveBlock1, playerPartyCount),
@@ -159,8 +163,10 @@ static const struct GFRomHeader sGFRomHeader = {
     .pcItemsCount = PC_ITEMS_COUNT,
     .pcItemsOffset = offsetof(struct SaveBlock1, pcItems),
     .giftRibbonsOffset = offsetof(struct SaveBlock1, giftRibbons),
+    #ifndef FREE_ENIGMA_BERRY
     .enigmaBerryOffset = offsetof(struct SaveBlock1, enigmaBerry),
-    .enigmaBerrySize = sizeof(struct EnigmaBerry),
-    .moveDescriptions = NULL,
+    #endif
+    .mapViewOffset = offsetof(struct SaveBlock1, mapView),
+    .unk19 = 0x00000000,
     .unk20 = 0x00000000, // 0xFFFFFFFF in FRLG
 };

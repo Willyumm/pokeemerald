@@ -90,44 +90,48 @@ void SetPlayerGotFirstFans(void);
 u16 GetNumFansOfPlayerInTrainerFanClub(void);
 
 static void RecordCyclingRoadResults(u32, u8);
-static void LoadLinkPartnerObjectEventSpritePalette(u8, u8, u8);
-static void Task_PetalburgGymSlideOpenRoomDoors(u8);
-static void PetalburgGymSetDoorMetatiles(u8, u16);
+static void LoadLinkPartnerObjectEventSpritePalette(u16 graphicsId, u8 localEventId, u8 paletteNum);
+static void Task_PetalburgGymSlideOpenRoomDoors(u8 taskId);
+static void PetalburgGymSetDoorMetatiles(u8 roomNumber, u16 metatileId);
 static void Task_PCTurnOnEffect(u8);
 static void PCTurnOnEffect_0(struct Task *);
 static void PCTurnOnEffect_1(s16, s8, s8);
 static void PCTurnOffEffect(void);
 static void Task_LotteryCornerComputerEffect(u8);
 static void LotteryCornerComputerEffect(struct Task *);
-static void Task_ShakeCamera(u8);
-static void StopCameraShake(u8);
-static void Task_MoveElevator(u8);
-static void MoveElevatorWindowLights(u16, bool8);
-static void Task_MoveElevatorWindowLights(u8);
-static void Task_ShowScrollableMultichoice(u8);
-static void FillFrontierExchangeCornerWindowAndItemIcon(u16, u16);
-static void ShowBattleFrontierTutorWindow(u8, u16);
+static void Task_ShakeCamera(u8 taskId);
+static void StopCameraShake(u8 taskId);
+static void Task_MoveElevator(u8 taskId);
+static void MoveElevatorWindowLights(u16 floorDelta, bool8 descending);
+static void Task_MoveElevatorWindowLights(u8 taskId);
+static void Task_ShowScrollableMultichoice(u8 taskId);
+static void FillFrontierExchangeCornerWindowAndItemIcon(u16 menu, u16 selection);
+static void ShowBattleFrontierTutorWindow(u8 menu, u16 selection);
 static void InitScrollableMultichoice(void);
-static void ScrollableMultichoice_ProcessInput(u8);
-static void ScrollableMultichoice_UpdateScrollArrows(u8);
-static void ScrollableMultichoice_MoveCursor(s32, bool8, struct ListMenu *);
-static void HideFrontierExchangeCornerItemIcon(u16, u16);
-static void ShowBattleFrontierTutorMoveDescription(u8, u16);
-static void CloseScrollableMultichoice(u8);
-static void ScrollableMultichoice_RemoveScrollArrows(u8);
-static void Task_ScrollableMultichoice_WaitReturnToList(u8);
-static void Task_ScrollableMultichoice_ReturnToList(u8);
-static void ShowFrontierExchangeCornerItemIcon(u16);
-static void Task_DeoxysRockInteraction(u8);
-static void ChangeDeoxysRockLevel(u8);
-static void WaitForDeoxysRockMovement(u8);
-static void Task_LinkRetireStatusWithBattleTowerPartner(u8);
-static void Task_LoopWingFlapSE(u8);
-static void Task_CloseBattlePikeCurtain(u8);
+static void ScrollableMultichoice_ProcessInput(u8 taskId);
+static void ScrollableMultichoice_UpdateScrollArrows(u8 taskId);
+static void ScrollableMultichoice_MoveCursor(s32 itemIndex, bool8 onInit, struct ListMenu *list);
+static void HideFrontierExchangeCornerItemIcon(u16 menu, u16 unused);
+static void ShowBattleFrontierTutorMoveDescription(u8 menu, u16 selection);
+static void CloseScrollableMultichoice(u8 taskId);
+static void ScrollableMultichoice_RemoveScrollArrows(u8 taskId);
+static void Task_ScrollableMultichoice_WaitReturnToList(u8 taskId);
+static void Task_ScrollableMultichoice_ReturnToList(u8 taskId);
+static void ShowFrontierExchangeCornerItemIcon(u16 item);
+static void Task_DeoxysRockInteraction(u8 taskId);
+static void ChangeDeoxysRockLevel(u8 a0);
+static void WaitForDeoxysRockMovement(u8 taskId);
+static void Task_LinkRetireStatusWithBattleTowerPartner(u8 taskId);
+static void Task_LoopWingFlapSE(u8 taskId);
+static void Task_CloseBattlePikeCurtain(u8 taskId);
 static u8 DidPlayerGetFirstFans(void);
 static void SetInitialFansOfPlayer(void);
 static u16 PlayerGainRandomTrainerFan(void);
-static void BufferFanClubTrainerName_(struct LinkBattleRecords *, u8, u8);
+#ifndef FREE_LINK_BATTLE_RECORDS
+static void BufferFanClubTrainerName_(struct LinkBattleRecords *linkRecords, u8 a, u8 b);
+#else
+static void BufferFanClubTrainerName_(u8 whichLinkTrainer, u8 whichNPCTrainer);
+#endif
 
 void Special_ShowDiploma(void)
 {
@@ -182,7 +186,7 @@ static void DetermineCyclingRoadResults(u32 numFrames, u8 numBikeCollisions)
     if (numFrames < 3600)
     {
         ConvertIntToDecimalStringN(gStringVar2, numFrames / 60, STR_CONV_MODE_RIGHT_ALIGN, 2);
-        gStringVar2[2] = CHAR_DEC_SEPARATOR;
+        gStringVar2[2] = CHAR_PERIOD;
         ConvertIntToDecimalStringN(&gStringVar2[3], ((numFrames % 60) * 100) / 60, STR_CONV_MODE_LEADING_ZEROS, 2);
         StringAppend(gStringVar2, gText_SpaceSeconds);
     }
@@ -502,7 +506,7 @@ void SpawnLinkPartnerObjectEvent(void)
     };
     u8 myLinkPlayerNumber;
     u8 playerFacingDirection;
-    u8 linkSpriteId;
+    u16 linkSpriteId;
     u8 i;
 
     myLinkPlayerNumber = GetMultiplayerId();
@@ -563,7 +567,7 @@ void SpawnLinkPartnerObjectEvent(void)
     }
 }
 
-static void LoadLinkPartnerObjectEventSpritePalette(u8 graphicsId, u8 localEventId, u8 paletteNum)
+static void LoadLinkPartnerObjectEventSpritePalette(u16 graphicsId, u8 localEventId, u8 paletteNum)
 {
     u8 adjustedPaletteNum;
     // Note: This temp var is necessary; paletteNum += 6 doesn't match.
@@ -1825,7 +1829,7 @@ void ShowDeptStoreElevatorFloorSelect(void)
     int xPos;
 
     sTutorMoveAndElevatorWindowId = AddWindow(&gElevatorFloor_WindowTemplate);
-    SetStandardWindowBorderStyle(sTutorMoveAndElevatorWindowId, FALSE);
+    SetStandardWindowBorderStyle(sTutorMoveAndElevatorWindowId, 0);
 
     xPos = GetStringCenterAlignXOffset(FONT_NORMAL, gText_ElevatorNowOn, 64);
     AddTextPrinterParameterized(sTutorMoveAndElevatorWindowId, FONT_NORMAL, gText_ElevatorNowOn, xPos, 1, TEXT_SKIP_DRAW, NULL);
@@ -2507,7 +2511,7 @@ static void Task_ShowScrollableMultichoice(u8 taskId)
     template = CreateWindowTemplate(0, task->tLeft, task->tTop, task->tWidth, task->tHeight, 0xF, 0x64);
     windowId = AddWindow(&template);
     task->tWindowId = windowId;
-    SetStandardWindowBorderStyle(windowId, FALSE);
+    SetStandardWindowBorderStyle(windowId, 0);
 
     gScrollableMultichoice_ListMenuTemplate.totalItems = task->tNumItems;
     gScrollableMultichoice_ListMenuTemplate.maxShowed = task->tMaxItemsOnScreen;
@@ -2606,7 +2610,7 @@ static void CloseScrollableMultichoice(u8 taskId)
     ScrollableMultichoice_RemoveScrollArrows(taskId);
     DestroyListMenuTask(task->tListTaskId, NULL, NULL);
     Free(sScrollableMultichoice_ListMenuItem);
-    ClearStdWindowAndFrameToTransparent(task->tWindowId, TRUE);
+    ClearStdWindowAndFrameToTransparent(task->tWindowId, 1);
     FillWindowPixelBuffer(task->tWindowId, PIXEL_FILL(0));
     CopyWindowToVram(task->tWindowId, COPYWIN_GFX);
     RemoveWindow(task->tWindowId);
@@ -2850,7 +2854,7 @@ void ShowBattlePointsWindow(void)
     };
 
     sBattlePointsWindowId = AddWindow(&sBattlePoints_WindowTemplate);
-    SetStandardWindowBorderStyle(sBattlePointsWindowId, FALSE);
+    SetStandardWindowBorderStyle(sBattlePointsWindowId, 0);
     UpdateBattlePointsWindow();
     CopyWindowToVram(sBattlePointsWindowId, COPYWIN_GFX);
 }
@@ -2896,7 +2900,7 @@ void ShowFrontierExchangeCornerItemIconWindow(void)
     };
 
     sFrontierExchangeCorner_ItemIconWindowId = AddWindow(&sFrontierExchangeCorner_ItemIconWindowTemplate);
-    SetStandardWindowBorderStyle(sFrontierExchangeCorner_ItemIconWindowId, FALSE);
+    SetStandardWindowBorderStyle(sFrontierExchangeCorner_ItemIconWindowId, 0);
     CopyWindowToVram(sFrontierExchangeCorner_ItemIconWindowId, COPYWIN_GFX);
 }
 
@@ -2918,7 +2922,7 @@ static void FillFrontierExchangeCornerWindowAndItemIcon(u16 menu, u16 selection)
         switch (menu)
         {
         case SCROLL_MULTI_BF_EXCHANGE_CORNER_DECOR_VENDOR_1:
-            AddTextPrinterParameterized2(0, FONT_NORMAL, sFrontierExchangeCorner_Decor1Descriptions[selection], 0, NULL, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_WHITE, TEXT_COLOR_LIGHT_GRAY);
+            AddTextPrinterParameterized2(0, FONT_NORMAL, sFrontierExchangeCorner_Decor1Descriptions[selection], 0, NULL, 2, 1, 3);
             if (sFrontierExchangeCorner_Decor1[selection] == 0xFFFF)
             {
                 ShowFrontierExchangeCornerItemIcon(sFrontierExchangeCorner_Decor1[selection]);
@@ -2931,7 +2935,7 @@ static void FillFrontierExchangeCornerWindowAndItemIcon(u16 menu, u16 selection)
             }
             break;
         case SCROLL_MULTI_BF_EXCHANGE_CORNER_DECOR_VENDOR_2:
-            AddTextPrinterParameterized2(0, FONT_NORMAL, sFrontierExchangeCorner_Decor2Descriptions[selection], 0, NULL, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_WHITE, TEXT_COLOR_LIGHT_GRAY);
+            AddTextPrinterParameterized2(0, FONT_NORMAL, sFrontierExchangeCorner_Decor2Descriptions[selection], 0, NULL, 2, 1, 3);
             if (sFrontierExchangeCorner_Decor2[selection] == 0xFFFF)
             {
                 ShowFrontierExchangeCornerItemIcon(sFrontierExchangeCorner_Decor2[selection]);
@@ -2944,11 +2948,11 @@ static void FillFrontierExchangeCornerWindowAndItemIcon(u16 menu, u16 selection)
             }
             break;
         case SCROLL_MULTI_BF_EXCHANGE_CORNER_VITAMIN_VENDOR:
-            AddTextPrinterParameterized2(0, FONT_NORMAL, sFrontierExchangeCorner_VitaminsDescriptions[selection], 0, NULL, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_WHITE, TEXT_COLOR_LIGHT_GRAY);
+            AddTextPrinterParameterized2(0, FONT_NORMAL, sFrontierExchangeCorner_VitaminsDescriptions[selection], 0, NULL, 2, 1, 3);
             ShowFrontierExchangeCornerItemIcon(sFrontierExchangeCorner_Vitamins[selection]);
             break;
         case SCROLL_MULTI_BF_EXCHANGE_CORNER_HOLD_ITEM_VENDOR:
-            AddTextPrinterParameterized2(0, FONT_NORMAL, sFrontierExchangeCorner_HoldItemsDescriptions[selection], 0, NULL, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_WHITE, TEXT_COLOR_LIGHT_GRAY);
+            AddTextPrinterParameterized2(0, FONT_NORMAL, sFrontierExchangeCorner_HoldItemsDescriptions[selection], 0, NULL, 2, 1, 3);
             ShowFrontierExchangeCornerItemIcon(sFrontierExchangeCorner_HoldItems[selection]);
             break;
         }
@@ -3040,7 +3044,7 @@ static void ShowBattleFrontierTutorWindow(u8 menu, u16 selection)
         if (gSpecialVar_0x8006 == 0)
         {
             sTutorMoveAndElevatorWindowId = AddWindow(&sBattleFrontierTutor_WindowTemplate);
-            SetStandardWindowBorderStyle(sTutorMoveAndElevatorWindowId, FALSE);
+            SetStandardWindowBorderStyle(sTutorMoveAndElevatorWindowId, 0);
         }
         ShowBattleFrontierTutorMoveDescription(menu, selection);
     }
@@ -3104,7 +3108,7 @@ void ScrollableMultichoice_RedrawPersistentMenu(void)
     {
         struct Task *task = &gTasks[taskId];
         ListMenuGetScrollAndRow(task->tListTaskId, &scrollOffset, &selectedRow);
-        SetStandardWindowBorderStyle(task->tWindowId, FALSE);
+        SetStandardWindowBorderStyle(task->tWindowId, 0);
 
         for (i = 0; i < MAX_SCROLL_MULTI_ON_SCREEN; i++)
             AddTextPrinterParameterized5(task->tWindowId, FONT_NORMAL, sScrollableMultichoiceOptions[gSpecialVar_0x8004][scrollOffset + i], 10, i * 16, TEXT_SKIP_DRAW, NULL, 0, 0);
@@ -4126,9 +4130,14 @@ void BufferFanClubTrainerName(void)
     case FANCLUB_MEMBER8:
         break;
     }
+    #ifndef FREE_LINK_BATTLE_RECORDS
     BufferFanClubTrainerName_(&gSaveBlock1Ptr->linkBattleRecords, whichLinkTrainer, whichNPCTrainer);
+    #else
+    BufferFanClubTrainerName_(whichLinkTrainer, whichNPCTrainer);
+    #endif
 }
 
+#ifndef FREE_LINK_BATTLE_RECORDS
 static void BufferFanClubTrainerName_(struct LinkBattleRecords *linkRecords, u8 whichLinkTrainer, u8 whichNPCTrainer)
 {
     struct LinkBattleRecord *record = &linkRecords->entries[whichLinkTrainer];
@@ -4166,6 +4175,35 @@ static void BufferFanClubTrainerName_(struct LinkBattleRecords *linkRecords, u8 
         ConvertInternationalString(gStringVar1, linkRecords->languages[whichLinkTrainer]);
     }
 }
+#else
+static void BufferFanClubTrainerName_(u8 whichLinkTrainer, u8 whichNPCTrainer)
+{
+    switch (whichNPCTrainer)
+    {
+        case 0:
+            StringCopy(gStringVar1, gText_Wallace);
+            break;
+        case 1:
+            StringCopy(gStringVar1, gText_Steven);
+            break;
+        case 2:
+            StringCopy(gStringVar1, gText_Brawly);
+            break;
+        case 3:
+            StringCopy(gStringVar1, gText_Winona);
+            break;
+        case 4:
+            StringCopy(gStringVar1, gText_Phoebe);
+            break;
+        case 5:
+            StringCopy(gStringVar1, gText_Glacia);
+            break;
+        default:
+            StringCopy(gStringVar1, gText_Wallace);
+            break;
+    }
+}
+#endif
 
 void UpdateTrainerFansAfterLinkBattle(void)
 {

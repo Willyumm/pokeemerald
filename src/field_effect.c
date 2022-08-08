@@ -26,6 +26,7 @@
 #include "trainer_pokemon_sprites.h"
 #include "trig.h"
 #include "util.h"
+#include "follow_me.h"
 #include "constants/field_effects.h"
 #include "constants/event_object_movement.h"
 #include "constants/metatile_behaviors.h"
@@ -1536,6 +1537,9 @@ static bool8 FallWarpEffect_End(struct Task *task)
     UnfreezeObjectEvents();
     InstallCameraPanAheadCallback();
     DestroyTask(FindTaskIdByFunc(Task_FallWarpFieldEffect));
+    
+    FollowMe_WarpSetEnd();
+    
     return FALSE;
 }
 
@@ -1587,7 +1591,10 @@ static bool8 EscalatorWarpOut_WaitForPlayer(struct Task *task)
         task->tState++;
         task->data[2] = 0;
         task->data[3] = 0;
-        if ((u8)task->tGoingUp == FALSE)
+        
+        EscalatorMoveFollower(task->data[1]);
+        
+        if ((u8)task->data[1] == FALSE)
         {
             task->tState = 4; // jump to EscalatorWarpOut_Down_Ride
         }
@@ -1658,12 +1665,14 @@ static void RideDownEscalatorOut(struct Task *task)
     }
 }
 
+//Escalator_BeginFadeOutToNewMap
 static void FadeOutAtEndOfEscalator(void)
 {
     TryFadeOutOldMapMusic();
     WarpFadeOutScreen();
 }
 
+//Escalator_TransitionToWarpInEffect
 static void WarpAtEndOfEscalator(void)
 {
     if (!gPaletteFade.active && BGMusicStopped() == TRUE)
@@ -1679,6 +1688,7 @@ static void WarpAtEndOfEscalator(void)
 #undef tState
 #undef tGoingUp
 
+//FieldCB_EscalatorWarpIn
 static void FieldCallback_EscalatorWarpIn(void)
 {
     Overworld_PlaySpecialMapMusic();
@@ -1690,6 +1700,7 @@ static void FieldCallback_EscalatorWarpIn(void)
 
 #define tState data[0]
 
+//Task_EscalatorWarpInFieldEffect
 static void Task_EscalatorWarpIn(u8 taskId)
 {
     struct Task *task;
@@ -1697,6 +1708,7 @@ static void Task_EscalatorWarpIn(u8 taskId)
     while (sEscalatorWarpInFieldEffectFuncs[task->tState](task));
 }
 
+//EscalatorWarpInEffect_1
 static bool8 EscalatorWarpIn_Init(struct Task *task)
 {
     struct ObjectEvent *objectEvent;
@@ -1726,6 +1738,7 @@ static bool8 EscalatorWarpIn_Init(struct Task *task)
     return TRUE;
 }
 
+//EscalatorWarpInEffect_2
 static bool8 EscalatorWarpIn_Down_Init(struct Task *task)
 {
     struct Sprite *sprite;
@@ -1736,6 +1749,7 @@ static bool8 EscalatorWarpIn_Down_Init(struct Task *task)
     return FALSE;
 }
 
+//EscalatorWarpInEffect_3
 static bool8 EscalatorWarpIn_Down_Ride(struct Task *task)
 {
     struct Sprite *sprite;
@@ -3035,6 +3049,9 @@ static void SurfFieldEffect_JumpOnSurfBlob(struct Task *task)
         ObjectEventSetGraphicsId(objectEvent, GetPlayerAvatarGraphicsIdByStateId(PLAYER_AVATAR_STATE_SURFING));
         ObjectEventClearHeldMovementIfFinished(objectEvent);
         ObjectEventSetHeldMovement(objectEvent, GetJumpSpecialMovementAction(objectEvent->movementDirection));
+
+        FollowMe_FollowerToWater();
+        
         gFieldEffectArguments[0] = task->tDestX;
         gFieldEffectArguments[1] = task->tDestY;
         gFieldEffectArguments[2] = gPlayerAvatar.objectEventId;
@@ -3879,3 +3896,18 @@ static void Task_MoveDeoxysRock(u8 taskId)
     }
 }
 
+// new
+u8 FldEff_CaveDust(void)
+{
+    u8 spriteId;
+    
+    SetSpritePosToOffsetMapCoords((s16 *)&gFieldEffectArguments[0], (s16 *)&gFieldEffectArguments[1], 8, 8);
+    spriteId = CreateSpriteAtEnd(gFieldEffectObjectTemplatePointers[FLDEFFOBJ_CAVE_DUST], gFieldEffectArguments[0], gFieldEffectArguments[1], 0xFF);
+    if (spriteId != MAX_SPRITES)
+    {
+        gSprites[spriteId].coordOffsetEnabled = TRUE;
+        gSprites[spriteId].data[0] = 22;
+    }
+    
+    return spriteId;
+}
