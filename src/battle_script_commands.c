@@ -3911,8 +3911,12 @@ static void Cmd_getexp(void)
 
                 item = GetMonData(&gPlayerParty[i], MON_DATA_HELD_ITEM);
 
-                if (item == ITEM_ENIGMA_BERRY_E_READER)
+                if (item == ITEM_ENIGMA_BERRY)
+                    #ifndef FREE_ENIGMA_BERRY
                     holdEffect = gSaveBlock1Ptr->enigmaBerry.holdEffect;
+                    #else
+                    holdEffect = 0;
+                    #endif
                 else
                     holdEffect = ItemId_GetHoldEffect(item);
 
@@ -3960,8 +3964,12 @@ static void Cmd_getexp(void)
         {
             item = GetMonData(&gPlayerParty[gBattleStruct->expGetterMonId], MON_DATA_HELD_ITEM);
 
-            if (item == ITEM_ENIGMA_BERRY_E_READER)
+            if (item == ITEM_ENIGMA_BERRY)
+                #ifndef FREE_ENIGMA_BERRY
                 holdEffect = gSaveBlock1Ptr->enigmaBerry.holdEffect;
+                #else
+                holdEffect = 0;
+                #endif
             else
                 holdEffect = ItemId_GetHoldEffect(item);
 
@@ -5166,6 +5174,21 @@ static void Cmd_moveend(void)
                     gBattleStruct->changedItems[i] = ITEM_NONE;
                 }
             }
+            gBattleScripting.moveendState++;
+            break;
+        case MOVEEND_ITEM_EFFECTS_TARGET:
+            if (ItemBattleEffects(ITEMEFFECT_TARGET, gBattlerTarget, FALSE))
+                effect = TRUE;
+            gBattleScripting.moveendState++;
+            break;
+        case MOVEEND_MOVE_EFFECTS2: // For effects which should happen after target items, for example Knock Off after damage from Rocky Helmet.
+            switch (gBattleStruct->moveEffect2)
+            {
+            case MOVE_EFFECT_KNOCK_OFF:
+                effect = TryKnockOffBattleScript(gBattlerTarget);
+                break;
+            }
+            gBattleStruct->moveEffect2 = 0;
             gBattleScripting.moveendState++;
             break;
         case MOVEEND_ITEM_EFFECTS_TARGET:
