@@ -48,6 +48,7 @@
 #include "trainer_see.h"
 #include "tv.h"
 #include "window.h"
+#include "quests.h"
 #include "constants/event_objects.h"
 
 typedef u16 (*SpecialFunc)(void);
@@ -995,6 +996,7 @@ bool8 ScrCmd_applymovement(struct ScriptContext *ctx)
     u16 localId = VarGet(ScriptReadHalfword(ctx));
     const void *movementScript = (const void *)ScriptReadWord(ctx);
 
+    gObjectEvents[GetObjectEventIdByLocalId(localId)].directionOverwrite = DIR_NONE;
     ScriptMovement_StartObjectMovementScript(localId, gSaveBlock1Ptr->location.mapNum, gSaveBlock1Ptr->location.mapGroup, movementScript);
     sMovingNpcId = localId;
     return FALSE;
@@ -1007,6 +1009,7 @@ bool8 ScrCmd_applymovementat(struct ScriptContext *ctx)
     u8 mapGroup = ScriptReadByte(ctx);
     u8 mapNum = ScriptReadByte(ctx);
 
+    gObjectEvents[GetObjectEventIdByLocalId(localId)].directionOverwrite = DIR_NONE;
     ScriptMovement_StartObjectMovementScript(localId, mapNum, mapGroup, movementScript);
     sMovingNpcId = localId;
     return FALSE;
@@ -1180,7 +1183,7 @@ bool8 ScrCmd_setobjectmovementtype(struct ScriptContext *ctx)
 
 bool8 ScrCmd_createvobject(struct ScriptContext *ctx)
 {
-    u8 graphicsId = ScriptReadByte(ctx);
+    u16 graphicsId = ScriptReadHalfword(ctx);
     u8 virtualObjId = ScriptReadByte(ctx);
     u16 x = VarGet(ScriptReadHalfword(ctx));
     u32 y = VarGet(ScriptReadHalfword(ctx));
@@ -1306,7 +1309,7 @@ bool8 ScrCmd_messageinstant(struct ScriptContext *ctx)
     if (msg == NULL)
         msg = (const u8 *)ctx->data[0];
     LoadMessageBoxAndBorderGfx();
-    DrawDialogueFrame(0, 1);
+    DrawDialogueFrame(0, TRUE);
     AddTextPrinterParameterized(0, FONT_NORMAL, msg, 0, 1, 0, NULL);
     return FALSE;
 }
@@ -1528,7 +1531,7 @@ bool8 ScrCmd_braillemessage(struct ScriptContext *ctx)
     winTemplate = CreateWindowTemplate(0, xWindow, yWindow + 1, width, height, 0xF, 0x1);
     sBrailleWindowId = AddWindow(&winTemplate);
     LoadUserWindowBorderGfx(sBrailleWindowId, 0x214, 0xE0);
-    DrawStdWindowFrame(sBrailleWindowId, 0);
+    DrawStdWindowFrame(sBrailleWindowId, FALSE);
     PutWindowTilemap(sBrailleWindowId);
     FillWindowPixelBuffer(sBrailleWindowId, PIXEL_FILL(1));
     AddTextPrinterParameterized(sBrailleWindowId, FONT_BRAILLE, gStringVar4, xText, yText, TEXT_SKIP_DRAW, NULL);
@@ -2252,7 +2255,7 @@ bool8 ScrCmd_checkmoneventlegal(struct ScriptContext *ctx)
 
 bool8 ScrCmd_trywondercardscript(struct ScriptContext *ctx)
 {
-    const u8* script = GetSavedRamScriptIfValid();
+    const u8 *script = GetSavedRamScriptIfValid();
 
     if (script)
     {
@@ -2291,7 +2294,7 @@ bool8 ScrCmd_setmonmetlocation(struct ScriptContext *ctx)
 
 static void CloseBrailleWindow(void)
 {
-    ClearStdWindowAndFrame(sBrailleWindowId, 1);
+    ClearStdWindowAndFrame(sBrailleWindowId, TRUE);
     RemoveWindow(sBrailleWindowId);
 }
 
@@ -2330,4 +2333,116 @@ bool8 ScrCmd_warpwhitefade(struct ScriptContext *ctx)
     DoWhiteFadeWarp();
     ResetInitialPlayerAvatarState();
     return TRUE;
+}
+
+bool8 ScrCmd_questmenu(struct ScriptContext *ctx)
+{
+    u8 caseId = ScriptReadByte(ctx);
+    u8 questId = VarGet(ScriptReadByte(ctx));
+
+    switch (caseId)
+    {
+    case QUEST_MENU_OPEN:
+    default:
+        SetQuestMenuActive();
+        BeginNormalPaletteFade(0xFFFFFFFF, 2, 16, 0, 0);
+        QuestMenu_Init(0, CB2_ReturnToFieldContinueScriptPlayMapMusic);
+        ScriptContext1_Stop();
+        break;
+    case QUEST_MENU_UNLOCK_QUEST:
+        GetSetQuestFlag(questId, FLAG_SET_UNLOCKED);
+        break;
+    case QUEST_MENU_COMPLETE_QUEST:
+        GetSetQuestFlag(questId, FLAG_SET_COMPLETED);
+        break;
+    case QUEST_MENU_SET_ACTIVE:
+        SetActiveQuest(questId);
+        break;
+    case QUEST_MENU_RESET_ACTIVE:
+        ResetActiveQuest();
+        break;
+    case QUEST_MENU_BUFFER_QUEST_NAME:
+            CopyQuestName(gStringVar1, questId);
+        break;
+    case QUEST_MENU_GET_ACTIVE_QUEST:
+        gSpecialVar_Result = GetActiveQuestIndex();
+        break;
+    case QUEST_MENU_CHECK_UNLOCKED:
+        if (GetSetQuestFlag(questId, FLAG_GET_UNLOCKED))
+            gSpecialVar_Result = TRUE;
+        else
+            gSpecialVar_Result = FALSE;
+        break;
+    case QUEST_MENU_CHECK_COMPLETE:
+        if (GetSetQuestFlag(questId, FLAG_GET_COMPLETED))
+            gSpecialVar_Result = TRUE;
+        else
+            gSpecialVar_Result = FALSE;
+        break;
+    }
+    
+    return TRUE;
+}
+
+// follow me script commands
+#include "follow_me.h"
+bool8 ScrCmd_setfollower(struct ScriptContext *ctx)
+{
+    u8 localId = ScriptReadByte(ctx);
+    u8 flags = ScriptReadByte(ctx);
+    
+    SetUpFollowerSprite(localId, flags);
+    return FALSE;
+}
+
+bool8 ScrCmd_destroyfollower(struct ScriptContext *ctx)
+{
+    DestroyFollower();
+    return FALSE;
+}
+
+bool8 ScrCmd_facefollower(struct ScriptContext *ctx)
+{
+    PlayerFaceFollowerSprite();
+    return FALSE;
+}
+
+bool8 ScrCmd_checkfollower(struct ScriptContext *ctx)
+{
+    CheckPlayerHasFollower();
+    return FALSE;
+}
+
+bool8 ScrCmd_givecustommon(struct ScriptContext *ctx)
+{
+    u16 species = ScriptReadHalfword(ctx);
+    u8 level = ScriptReadByte(ctx);
+    u16 item = ScriptReadHalfword(ctx);
+    u8 ball = ScriptReadByte(ctx);
+    u8 nature = ScriptReadByte(ctx);
+    u8 abilityNum = ScriptReadByte(ctx);
+    u8 hpEv = ScriptReadByte(ctx);
+    u8 atkEv = ScriptReadByte(ctx);
+    u8 defEv = ScriptReadByte(ctx);
+    u8 speedEv = ScriptReadByte(ctx);
+    u8 spAtkEv = ScriptReadByte(ctx);
+    u8 spDefEv = ScriptReadByte(ctx);
+    u8 hpIv = ScriptReadByte(ctx);
+    u8 atkIv = ScriptReadByte(ctx);
+    u8 defIv = ScriptReadByte(ctx);
+    u8 speedIv = ScriptReadByte(ctx);
+    u8 spAtkIv = ScriptReadByte(ctx);
+    u8 spDefIv = ScriptReadByte(ctx);
+    u16 move1 = ScriptReadHalfword(ctx);
+    u16 move2 = ScriptReadHalfword(ctx);
+    u16 move3 = ScriptReadHalfword(ctx);
+    u16 move4 = ScriptReadHalfword(ctx);
+    bool8 isShiny = ScriptReadByte(ctx);
+    
+    u8 evs[NUM_STATS] = {hpEv, atkEv, defEv, speedEv, spAtkEv, spDefEv};
+    u8 ivs[NUM_STATS] = {hpIv, atkIv, defIv, speedIv, spAtkIv, spDefIv};
+    u16 moves[4] = {move1, move2, move3, move4};
+    
+    gSpecialVar_Result = ScriptGiveCustomMon(species, level, item, ball, nature, abilityNum, evs, ivs, moves, isShiny);
+    return FALSE;
 }

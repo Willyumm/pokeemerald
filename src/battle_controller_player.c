@@ -1656,7 +1656,7 @@ static void PlayerHandleYesNoInput(void)
     }
     if (JOY_NEW(A_BUTTON))
     {
-        HandleBattleWindow(0x18, 8, 0x1D, 0xD, WINDOW_CLEAR);
+        HandleBattleWindow(YESNOBOX_X_Y, WINDOW_CLEAR);
         PlaySE(SE_SELECT);
 
         if (gMultiUsePlayerCursor != 0)
@@ -1668,7 +1668,7 @@ static void PlayerHandleYesNoInput(void)
     }
     if (JOY_NEW(B_BUTTON))
     {
-        HandleBattleWindow(0x18, 8, 0x1D, 0xD, WINDOW_CLEAR);
+        HandleBattleWindow(YESNOBOX_X_Y, WINDOW_CLEAR);
         PlaySE(SE_SELECT);
         PlayerBufferExecCompleted();
     }
@@ -1722,7 +1722,7 @@ static void MoveSelectionDisplayMoveType(void)
     txtPtr = StringCopy(gDisplayedStringBattle, gText_MoveInterfaceType);
     *(txtPtr)++ = EXT_CTRL_CODE_BEGIN;
     *(txtPtr)++ = EXT_CTRL_CODE_FONT;
-    *(txtPtr)++ = 1;
+    *(txtPtr)++ = FONT_NORMAL;
 
     StringCopy(txtPtr, gTypeNames[gBattleMoves[moveInfo->moves[gMoveSelectionCursor[gActiveBattler]]].type]);
     BattlePutTextOnWindow(gDisplayedStringBattle, B_WIN_MOVE_TYPE);
@@ -1892,7 +1892,7 @@ static u32 CopyPlayerMonData(u8 monId, u8 *dst)
             moveData.pp[size] = GetMonData(&gPlayerParty[monId], MON_DATA_PP1 + size);
         }
         moveData.ppBonuses = GetMonData(&gPlayerParty[monId], MON_DATA_PP_BONUSES);
-        src = (u8*)(&moveData);
+        src = (u8 *)(&moveData);
         for (size = 0; size < sizeof(moveData); size++)
             dst[size] = src[size];
         break;
@@ -2814,7 +2814,7 @@ static void PlayerHandleYesNoBox(void)
 {
     if (GetBattlerSide(gActiveBattler) == B_SIDE_PLAYER)
     {
-        HandleBattleWindow(0x18, 8, 0x1D, 0xD, 0);
+        HandleBattleWindow(YESNOBOX_X_Y, 0);
         BattlePutTextOnWindow(gText_BattleYesNoChoice, B_WIN_YESNO);
         gMultiUsePlayerCursor = 1;
         BattleCreateYesNoCursorAt(1);

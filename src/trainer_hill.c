@@ -43,9 +43,8 @@
 // EWRAM
 struct TrHillStruct2
 {
-    u8 floorId;
-    struct TrHillTag tag;
-    struct TrHillFloor floors[NUM_TRAINER_HILL_FLOORS];
+    u8 name[HILL_TRAINERS_PER_FLOOR][TRAINER_NAME_LENGTH + 1];
+    u8 facilityClass[HILL_TRAINERS_PER_FLOOR];
 };
 
 static EWRAM_DATA struct TrHillStruct2 *sHillData = NULL;
@@ -289,7 +288,7 @@ void ResetTrainerHillResults(void)
     gSaveBlock2Ptr->frontier.unk_EF9 = 0;
     #ifndef FREE_TRAINER_HILL
     gSaveBlock1Ptr->trainerHill.bestTime = 0;
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < NUM_TRAINER_HILL_MODES; i++)
         SetTimerValue(&gSaveBlock1Ptr->trainerHillTimes[i], HILL_MAX_TIME);
     #endif
 }
@@ -311,8 +310,8 @@ void GetTrainerHillTrainerName(u8 *dst, u16 trainerId)
     s32 i;
     u8 id = trainerId - 1;
 
-    for (i = 0; i < HILL_TRAINER_NAME_LENGTH; i++)
-        dst[i] = sRoomTrainers->name[id][i];
+    for (i = 0; i < TRAINER_NAME_LENGTH + 1; i++)
+        dst[i] = sFloorTrainers->name[id][i];
 }
 
 u8 GetTrainerHillTrainerFrontSpriteId(u16 trainerId)
@@ -336,11 +335,10 @@ void InitTrainerHillBattleStruct(void)
 
     for (i = 0; i < 2; i++)
     {
-        for (j = 0; j < HILL_TRAINER_NAME_LENGTH; j++)
-        {
-            sRoomTrainers->name[i][j] = sHillData->floors[sHillData->floorId].trainers[i].name[j];
-        }
-        sRoomTrainers->facilityClass[i] = sHillData->floors[sHillData->floorId].trainers[i].facilityClass;
+        for (j = 0; j < TRAINER_NAME_LENGTH + 1; j++)
+            sFloorTrainers->name[i][j] = sHillData->floors[sHillData->floorId].trainers[i].name[j];
+
+        sFloorTrainers->facilityClass[i] = sHillData->floors[sHillData->floorId].trainers[i].facilityClass;
     }
     #ifndef FREE_TRAINER_HILL
     SetTrainerHillVBlankCounter(&gSaveBlock1Ptr->trainerHill.timer);
@@ -1019,7 +1017,7 @@ static void GetChallengeWon(void)
 static void TrainerHillSetTag(void)
 {
     #ifndef FREE_TRAINER_HILL
-    gSaveBlock1Ptr->trainerHill.tag = gSpecialVar_0x8005;
+    gSaveBlock1Ptr->trainerHill.mode = gSpecialVar_0x8005;
     gSaveBlock1Ptr->trainerHill.bestTime = gSaveBlock1Ptr->trainerHillTimes[gSpecialVar_0x8005];
     #endif
 }
@@ -1065,7 +1063,8 @@ static u16 GetPrizeItemId(void)
         i = GetPrizeListId(FALSE);
 
     #ifndef FREE_TRAINER_HILL
-    if (gSaveBlock1Ptr->trainerHill.tag == HILL_TAG_EXPERT)
+    // 1 is added to Expert mode's prize list selection because otherwise it has the same prizes as Variety
+    if (gSaveBlock1Ptr->trainerHill.mode == HILL_MODE_EXPERT)
         i = (i + 1) % NUM_TRAINER_HILL_PRIZE_LISTS;
 
     prizeList = sPrizeListSets[prizeListSetId][i];
@@ -1081,7 +1080,7 @@ static u16 GetPrizeItemId(void)
     else if (minutes < 18)
         id = 4;
     else
-        id = 5;
+        id = 5; // ITEM_GREAT_BALL
     #endif
 
     return prizeList[id];
